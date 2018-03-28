@@ -1,0 +1,14 @@
+diff --git a/src/mainview.ui b/src/mainview.ui
+index 0b57c57..7dc15dd 100644
+--- a/src/mainview.ui
++++ b/src/mainview.ui
+@@ -828,9 +828,6 @@
+    <property name="toolTip">
+     <string>Checkout selected revision</string>
+    </property>
+-   <property name="shortcut">
+-    <string>Ctrl+C</string>
+-   </property>
+   </action>
+  </widget>
+  <layoutdefault spacing="6" margin="11"/>

@@ -1,0 +1,153 @@
+qgit (2.7-2) unstable; urgency=medium
+
+  * Disable Ctrl+C shortcut for checkout (Closes: #867171).
+
+ -- Andrey Rahmatullin <wrar@debian.org>  Sun, 09 Jul 2017 21:16:02 +0500
+
+qgit (2.7-1) unstable; urgency=medium
+
+  * Upload to unstable
+  * Bump Standards-Version to 4.0.0 (no change needed)
+
+ -- Andrey Rahmatullin <wrar@debian.org>  Sun, 25 Jun 2017 01:19:33 +0500
+
+qgit (2.7-1~exp1) experimental; urgency=medium
+
+  * New upstream release
+    + fix a spelling error (Closes: #851193)
+  * Upload to experimental
+  * Bump the cmake version in B-D to 2.8.11
+  * Switch to the debhelper compat level 10
+  * Install the upstream desktop file
+  * Bump Standards-Version to 3.9.8 (no change needed)
+
+ -- Andrey Rahmatullin <wrar@debian.org>  Sat, 04 Mar 2017 20:17:52 +0500
+
+qgit (2.6-1) unstable; urgency=medium
+
+  * New upstream release
+  * Bump Standards-Version to 3.9.7 (no change needed)
+  * Update Vcs-* fields to use HTTPS
+  * Drop the menu file
+  * Drop the MimeType field from .desktop as qgit cannot open directories from
+    the command line anyway (Closes: #641745)
+
+ -- Andrey Rahmatullin <wrar@debian.org>  Sun, 27 Mar 2016 15:46:03 +0500
+
+qgit (2.5-2) unstable; urgency=low
+
+  * Fix the binary installaton path with recent Qt (Closes: #724814)
+  * Drop stgit from Recommends
+  * Use canonical paths in Vcs-* fields
+
+ -- Andrey Rahmatullin <wrar@wrar.name>  Mon, 14 Oct 2013 23:59:26 +0600
+
+qgit (2.5-1) unstable; urgency=low
+
+  * Upload to unstable
+
+ -- Andrey Rahmatullin <wrar@wrar.name>  Sat, 04 May 2013 19:09:15 +0600
+
+qgit (2.5-1~exp1) experimental; urgency=low
+
+  * Upload to experimental
+  * New upstream release
+  * Bump Standards-Version to 3.9.4 (no change needed)
+
+ -- Andrey Rahmatullin <wrar@wrar.name>  Sat, 22 Sep 2012 00:00:56 +0600
+
+qgit (2.4-1) unstable; urgency=low
+
+  * New upstream release
+  * debian/control:
+    - update Homepage
+    - bump Standards-Version to 3.9.3 (no change needed)
+    - update the B-D for debhelper to >= 9
+  * debian/compat:
+    - bump to 9
+  * Add debian/watch
+  * debian/rules:
+    - convert to dh(1)
+    - link with --as-needed
+    - enable parallel building
+    - enable all hardening options
+  * debian/docs:
+    - package TODO.txt
+  * debian/install:
+    - do not install qgit binary manually
+  * debian/patches:
+    - add fix-format-security.patch to fix building with
+      -Werror=format-security
+    - drop git-repo-config-deprecated.patch, included upstream
+
+ -- Andrey Rahmatullin <wrar@wrar.name>  Fri, 15 Jun 2012 20:50:14 +0600
+
+qgit (2.3-2) unstable; urgency=low
+
+  * Depend on git instead of git-core (Closes: #599201)
+  * Fix qgit.desktop (Closes: #549648)
+  * Suggest source-highlight (Closes: #547972)
+  * Use git config instead of git repo-config (Closes: #626008)
+  * Change source format to 3.0 (quilt)
+  * Switch to debhelper compatibility level 8
+  * Install the application icon and use it in qgit.desktop
+  * Fix some spelling errors
+
+ -- Andrey Rahmatullin <wrar@wrar.name>  Wed, 01 Jun 2011 21:17:16 +0600
+
+qgit (2.3-1) unstable; urgency=low
+
+  * New upstream release
+  * Add .desktop file
+  * Closes: #533161, #525331, #527911, #485930
+
+ -- Wartan Hachaturow <wart@debian.org>  Fri, 19 Jun 2009 14:06:16 +0400
+
+qgit (2.2-1) unstable; urgency=low
+
+  * New upstream release
+  * Closes: #456365
+
+ -- Wartan Hachaturow <wart@debian.org>  Tue, 24 Mar 2009 19:10:51 +0300
+
+qgit (1.5.7-1) unstable; urgency=low
+
+  * New upstream release 
+  * Closes: #441570, #441280
+  * Get rid of config.sub and config.guess, Closes: #441286
+
+ -- Wartan Hachaturow <wart@debian.org>  Thu, 13 Sep 2007 00:18:01 +0400
+
+qgit (1.5.5-1) unstable; urgency=low
+
+  * New upstream release
+  * Closes: #412451
+
+ -- Wartan Hachaturow <wart@debian.org>  Sat, 17 Mar 2007 12:31:40 +0300
+
+qgit (1.5.1-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Wartan Hachaturow <wart@debian.org>  Sat, 16 Sep 2006 00:15:41 +0400
+
+qgit (1.4-1) unstable; urgency=low
+
+  * New upstream release
+  * Minor package description improvement, Closes: #373640
+
+ -- Wartan Hachaturow <wart@debian.org>  Wed, 30 Aug 2006 22:39:49 +0400
+
+qgit (1.3-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Wartan Hachaturow <wart@debian.org>  Wed, 14 Jun 2006 01:08:32 +0400
+
+qgit (1.2-1) unstable; urgency=low
+
+  * Initial release
+  * Closes: #366160
+
+ -- Wartan Hachaturow <wart@debian.org>  Wed,  3 May 2006 14:43:11 +0400
+
