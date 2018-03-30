@@ -1,5 +1,8 @@
 qgit (2.7.1-2) unstable; urgency=medium
+
   * Added ability to compare real files in workspace
+
+ -- Mateusz Balbus <mate_ob@yahoo.com>  Fri, 30 Mar 2018 16:53:00 +0200
 
 qgit (2.7-2) unstable; urgency=medium
 
