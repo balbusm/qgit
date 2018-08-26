@@ -6,7 +6,6 @@
 	Copyright: See COPYING file that comes with this distribution
 
 */
-#include <QButtonGroup>
 #include <QScrollBar>
 #include "common.h"
 #include "git.h"
