@@ -86,17 +86,26 @@ MainImpl::MainImpl(SCRef cd, QWidget* p) : QMainWindow(p) {
 	// set-up standard revisions and files list font
 	QSettings settings;
 	QString font(settings.value(STD_FNT_KEY).toString());
-	if (font.isEmpty())
+	if (font.isEmpty()) {
+#if (QT_VERSION >= QT_VERSION_CHECK(5,2,0))
+		font = QFontDatabase::systemFont(QFontDatabase::GeneralFont).toString();
+#else
 		font = QApplication::font().toString();
+#endif
+	}
 	QGit::STD_FONT.fromString(font);
 
 	// set-up typewriter (fixed width) font
 	font = settings.value(TYPWRT_FNT_KEY).toString();
 	if (font.isEmpty()) { // choose a sensible default
+#if (QT_VERSION >= QT_VERSION_CHECK(5,2,0))
+		QFont fnt = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+#else
 		QFont fnt = QApplication::font();
 		fnt.setStyleHint(QFont::TypeWriter, QFont::PreferDefault);
 		fnt.setFixedPitch(true);
 		fnt.setFamily(fnt.defaultFamily()); // the family corresponding
+#endif
 		font = fnt.toString();              // to current style hint
 	}
 	QGit::TYPE_WRITER_FONT.fromString(font);
@@ -1202,23 +1211,31 @@ void MainImpl::doUpdateRecentRepoMenu(SCRef newEntry) {
 	settings.setValue(REC_REP_KEY, newRecents);
 }
 
-static int cntMenuEntries(const QMenu& menu) {
+static void prepareRefSubmenu(QMenu* menu, const QStringList& refs, const QChar sep = '/') {
 
-	int cnt = 0;
-	QList<QAction*> al(menu.actions());
-	FOREACH (QList<QAction*>, it, al) {
-		if (!(*it)->isSeparator())
-			cnt++;
+	FOREACH_SL (it, refs) {
+		const QStringList& parts(it->split(sep, QString::SkipEmptyParts));
+		QMenu* add_here = menu;
+		FOREACH_SL (pit, parts) {
+			if (pit == parts.end() - 1) break;
+			QMenu* found = add_here->findChild<QMenu*>(*pit, Qt::FindDirectChildrenOnly);
+			if(!found) {
+				found = add_here->addMenu(*pit);
+				found->setObjectName(*pit);
+			}
+			add_here = found;
+		}
+		QAction* act = add_here->addAction(*it);
+		act->setData("Ref");
 	}
-	return cnt;
 }
 
 void MainImpl::doContexPopup(SCRef sha) {
 
 	QMenu contextMenu(this);
-	QMenu contextBrnMenu("More branches...", this);
-	QMenu contextTagMenu("More tags...", this);
+	QMenu contextBrnMenu("Branches...", this);
 	QMenu contextRmtMenu("Remote branches...", this);
+	QMenu contextTagMenu("Tags...", this);
 
 	connect(&contextMenu, SIGNAL(triggered(QAction*)), this, SLOT(goRef_triggered(QAction*)));
 
@@ -1263,63 +1280,29 @@ void MainImpl::doContexPopup(SCRef sha) {
 		if (ActPop->isEnabled())
 			contextMenu.addAction(ActPop);
 
-		const QStringList& bn(git->getAllRefNames(Git::BRANCH, Git::optOnlyLoaded));
-		const QStringList& rbn(git->getAllRefNames(Git::RMT_BRANCH, Git::optOnlyLoaded));
-		const QStringList& tn(git->getAllRefNames(Git::TAG, Git::optOnlyLoaded));
-		QAction* act = NULL;
+		contextMenu.addSeparator();
 
-		FOREACH_SL (it, rbn) {
-			act = contextRmtMenu.addAction(*it);
-			act->setData("Ref");
-		}
+		QStringList bn(git->getAllRefNames(Git::BRANCH, Git::optOnlyLoaded));
+		bn.sort();
+		prepareRefSubmenu(&contextBrnMenu, bn);
+		contextMenu.addMenu(&contextBrnMenu);
+		contextBrnMenu.setEnabled(bn.size() > 0);
 
-		// halve the possible remaining entries for branches and tags
-		int remainingEntries = (MAX_MENU_ENTRIES - cntMenuEntries(contextMenu));
-		if (!contextRmtMenu.isEmpty()) --remainingEntries;
-		int tagEntries = remainingEntries / 2;
-		int brnEntries = remainingEntries - tagEntries;
+		QStringList rbn(git->getAllRefNames(Git::RMT_BRANCH, Git::optOnlyLoaded));
+		rbn.sort();
+		prepareRefSubmenu(&contextRmtMenu, rbn);
+		contextMenu.addMenu(&contextRmtMenu);
+		contextRmtMenu.setEnabled(rbn.size() > 0);
 
-		// display more branches, if there are few tags
-		if (tagEntries > tn.count())
-			tagEntries = tn.count();
+		QStringList tn(git->getAllRefNames(Git::TAG, Git::optOnlyLoaded));
+		tn.sort();
+		prepareRefSubmenu(&contextTagMenu, tn);
+		contextMenu.addSeparator();
+		contextMenu.addMenu(&contextTagMenu);
+		contextTagMenu.setEnabled(tn.size() > 0);
 
-		// one branch less because of the "More branches..." submenu
-		if ((bn.count() > brnEntries) && tagEntries)
-			tagEntries++;
-
-		if (!bn.empty())
-			contextMenu.addSeparator();
-
-		FOREACH_SL (it, bn) {
-			if (   cntMenuEntries(contextMenu) < MAX_MENU_ENTRIES - tagEntries
-			    || (*it == bn.last() && contextBrnMenu.isEmpty()))
-				act = contextMenu.addAction(*it);
-			else
-				act = contextBrnMenu.addAction(*it);
-
-			act->setData("Ref");
-		}
-		if (!contextBrnMenu.isEmpty())
-			contextMenu.addMenu(&contextBrnMenu);
-
-		if (!contextRmtMenu.isEmpty())
-			contextMenu.addMenu(&contextRmtMenu);
-
-		if (!tn.empty())
-			contextMenu.addSeparator();
-
-		FOREACH_SL (it, tn) {
-			if (   cntMenuEntries(contextMenu) < MAX_MENU_ENTRIES
-			    || (*it == tn.last() && contextTagMenu.isEmpty()))
-				act = contextMenu.addAction(*it);
-			else
-				act = contextTagMenu.addAction(*it);
-
-			act->setData("Ref");
-		}
-		if (!contextTagMenu.isEmpty())
-			contextMenu.addMenu(&contextTagMenu);
 	}
+
 	QPoint p = QCursor::pos();
 	p += QPoint(10, 10);
 	contextMenu.exec(p);
@@ -2059,32 +2042,40 @@ void MainImpl::ActAbout_activated() {
 
 	static const char* aboutMsg =
 	"<p><b>QGit version " PACKAGE_VERSION "</b></p>"
-	"<p>Copyright (c) 2005, 2007, 2008 Marco Costalba</p>"
+	"<p>Copyright (c) 2005, 2007, 2008 Marco Costalba<br>"
+	"Copyright (c) 2011-2018 <a href='mailto:tibirna@kde.org'>Cristian Tibirna</a></p>"
 	"<p>Use and redistribute under the terms of the<br>"
 	"<a href=\"http://www.gnu.org/licenses/old-licenses/gpl-2.0.html\">GNU General Public License Version 2</a></p>"
 	"<p>Contributors:<br>"
-	"Copyright (c) 2007 Andy Parkins<br>"
-	"Copyright (c) 2007 Pavel Roskin<br>"
-	"Copyright (c) 2007 Peter Oberndorfer<br>"
-	"Copyright (c) 2007 Yaacov Akiba<br>"
-	"Copyright (c) 2007 James McKaskill<br>"
-	"Copyright (c) 2008 Jan Hudec<br>"
-	"Copyright (c) 2008 Paul Gideon Dann<br>"
-	"Copyright (c) 2008 Oliver Bock<br>"
-	"Copyright (c) 2010 Cyp &lt;cyp561@gmail.com&gt;<br>"
-	"Copyright (c) 2011 Jean-Fran&ccedil;ois Dagenais &lt;dagenaisj@sonatest.com&gt;<br>"
-	"Copyright (c) 2011 Pavel Tikhomirov &lt;pavtih@gmail.com&gt;<br>"
-	"Copyright (c) 2011-2016 Cristian Tibirna &lt;tibirna@kde.org&gt;<br>"
-	"Copyright (c) 2011 Tim Blechmann &lt;tim@klingt.org&gt;<br>"
-	"Copyright (c) 2014 Gregor Mi &lt;codestruct@posteo.org&gt;<br>"
-	"Copyright (c) 2014 Sbytov N.N &lt;sbytnn@gmail.com&gt;<br>"
-	"Copyright (c) 2015 Daniel Levin &lt;dendy.ua@gmail.com&gt;<br>"
-	"Copyright (c) 2017 Luigi Toscano &lt;luigi.toscano@tiscali.it&gt;<br>"
-	"Copyright (c) 2016 Pavel Karelin &lt;hkarel@yandex.ru&gt;<br>"
-	"Copyright (c) 2016 Zane Bitter &lt;zbitter@redhat.com&gt;<br>"
-	"Copyright (c) 2016 Robert Haschke &lt;rhaschke@techfak.uni-bielefeld.de&gt;<br>"
-	"Copyright (c) 2017 Andrey Rahmatullin $lt;wrar@wrar.name&gt;"
-    "</p>"
+	"Copyright (c) "
+	"<nobr>2007 Andy Parkins,</nobr> "
+	"<nobr>2007 Pavel Roskin,</nobr> "
+	"<nobr>2007 Peter Oberndorfer,</nobr> "
+	"<nobr>2007 Yaacov Akiba,</nobr> "
+	"<nobr>2007 James McKaskill,</nobr> "
+	"<nobr>2008 Jan Hudec,</nobr> "
+	"<nobr>2008 Paul Gideon Dann,</nobr> "
+	"<nobr>2008 Oliver Bock,</nobr> "
+	"<nobr>2010 <a href='mailto:cyp561@gmail.com'>Cyp</a>,</nobr> "
+	"<nobr>2011 <a href='dagenaisj@sonatest.com'>Jean-Fran&ccedil;ois Dagenais</a>,</nobr> "
+	"<nobr>2011 <a href='mailto:pavtih@gmail.com'>Pavel Tikhomirov</a>,</nobr> "
+	"<nobr>2011 <a href='mailto:tim@klingt.org'>Tim Blechmann</a>,</nobr> "
+	"<nobr>2014 <a href='mailto:codestruct@posteo.org'>Gregor Mi</a>,</nobr> "
+	"<nobr>2014 <a href='mailto:sbytnn@gmail.com'>Sbytov N.N</a>,</nobr> "
+	"<nobr>2015 <a href='mailto:dendy.ua@gmail.com'>Daniel Levin</a>,</nobr> "
+	"<nobr>2017 <a href='mailto:luigi.toscano@tiscali.it'>Luigi Toscano</a>,</nobr> "
+	"<nobr>2016 <a href='mailto:hkarel@yandex.ru'>Pavel Karelin</a>,</nobr> "
+	"<nobr>2016 <a href='mailto:zbitter@redhat.com'>Zane Bitter</a>,</nobr> "
+	"<nobr>2016 <a href='mailto:rhaschke@techfak.uni-bielefeld.de'>Robert Haschke</a>,</nobr> "
+	"<nobr>2017 <a href='mailto:wrar@wrar.name'>Andrey Rahmatullin</a>,</nobr> "
+	"<nobr>2017 <a href='mailto:alex-github@wenlex.nl'>Alex Hermann</a>,</nobr> "
+	"<nobr>2017 <a href='mailto:shalokshalom@protonmail.ch'>Matthias Schuster</a>,</nobr> "
+	"<nobr>2017 <a href='mailto:u.joss@calltrade.ch'>Urs Joss</a>,</nobr> "
+	"<nobr>2017 <a href='mailto:patrick.m.lacasse@gmail.com'>Patrick Lacasse</a>,</nobr> "
+	"<nobr>2018 <a href='mailto:deveee@gmail.com'>Deve</a>,</nobr> "
+	"<nobr>2018 <a href='mailto:asturm@gentoo.org'>Andreas Sturmlechner</a>,</nobr> "
+	"<nobr>2018 <a href='mailto:kde@davidedmundson.co.uk'>David Edmundson</a></nobr>"
+	"</p>"
 
 	"<p>This version was compiled against Qt " QT_VERSION_STR "</p>";
 	QMessageBox::about(this, "About QGit", QString::fromLatin1(aboutMsg));

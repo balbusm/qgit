@@ -633,6 +633,11 @@ MyProcess* Git::getDiff(SCRef sha, QObject* receiver, SCRef diffToSha, bool comb
 	if (sha != ZERO_SHA) {
 		runCmd = "git diff-tree --no-color -r --patch-with-stat ";
 		runCmd.append(combined ? "-c " : "-C -m "); // TODO rename for combined
+
+        const Rev* r = revLookup(sha);
+        if (r->parentsCount() == 0)
+            runCmd.append("--root ");
+
 		runCmd.append(diffToSha + " " + sha); // diffToSha could be empty
 	} else
 		runCmd = "git diff-index --no-color -r -m --patch-with-stat HEAD";
@@ -1736,7 +1741,7 @@ bool Git::getRefs() {
         curBranchSHA = curBranchSHA.trimmed();
         curBranchName = curBranchName.prepend('\n').section("\n*", 1);
         curBranchName = curBranchName.section('\n', 0, 0).trimmed();
-        if (curBranchName.startsWith("(detached from"))
+        if (curBranchName.contains(" detached "))
             curBranchName = "";
 
         // read refs, normally unsorted
