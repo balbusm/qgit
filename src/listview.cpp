@@ -877,7 +877,7 @@ QString ListView::refNameAt(const QPoint &pos)
 /*
  * Return the device pixel ratio
  */
-qreal ListViewDelegate::dpr(void) const {
+const qreal ListViewDelegate::dpr(void) const {
 #if QT_VERSION >= QT_VERSION_CHECK(5,6,0)
     return qApp->devicePixelRatio();
 #else
